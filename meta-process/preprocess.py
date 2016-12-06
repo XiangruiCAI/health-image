@@ -154,7 +154,7 @@ def meta_data(iline):
 
 
 if __name__ == '__main__':
-    with open('../data/records.csv', 'rb') as csvinput, \
+    with open('../data/raw/records.csv', 'rb') as csvinput, \
             open('./meta.csv', 'w') as csvoutput1,  \
             open('./meta_full.csv', 'w') as csvoutput2:
         RECORDS = csv.reader(csvinput)

@@ -17,7 +17,7 @@ def find_label(path):
         gender = 0
     else:
         gender = 1
-    with open('../data/records.csv', 'rb') as r:
+    with open('../data/raw/records.csv', 'rb') as r:
         label = -1
         iid = ''
         RECORDS = csv.reader(r)
@@ -124,10 +124,17 @@ def split_write(l, ratio, w1, w2):
 
 
 if __name__ == '__main__':
-    with open('./meta_full_final.csv', 'w') as o1, \
+    with open('./lut.log', 'rb') as lut, \
+            open('./meta_full_final.csv', 'w') as o1, \
             open('./meta_final.csv', 'w') as o2, \
             open('./meta_train.csv', 'w') as o3, \
             open('./meta_test.csv', 'w') as o4:
+        no_lut = {}
+        i = 0
+        for line in lut:
+            no_lut[line.strip('\n')] = i
+            i += 1
+
         meta = []
         header = ['path', 'label', 'IID', 'gender']
         out1 = csv.writer(o1, delimiter = ' ')
@@ -142,6 +149,8 @@ if __name__ == '__main__':
         num_male = 0
         num_female = 0
         for key in sorted(meta_dict.keys()):
+            if key in no_lut:
+                continue
             out1.writerow(meta_dict[key])
             out2.writerow(meta_dict[key][:2])
             meta.append(meta_dict[key][:2])

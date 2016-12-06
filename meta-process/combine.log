@@ -15,21 +15,21 @@ duplicate case: DX_male/1.3.51.20161016190821.103213250.49258138/I00000009874.dc
 duplicate case: DX_male/1.3.51.20161013144548.103207520.49248540/I00000009886.dcm
 duplicate case: DX_male/1.3.51.20161017151225.103216866.49263636/I00000009974.dcm
 duplicate case: DX_male/1.3.51.20161018151548.103221231.49331063/I00000010233.dcm
-duplicate case: DX_male/1.3.51.20161019101229.103223540.49595013/I00000010353.dcm
+duplicate case: DX_male/1.3.51.20161019101229.103223540.49595013/I00000010362.dcm
 duplicate case: DX_female/1.3.51.20161026104211.103244255.49633918/I00000013181.dcm
 duplicate case: DX_female/1.3.51.20161026112732.103244553.49634478/I00000013190.dcm
 duplicate case: DX_female/1.3.51.20161026154611.103245524.49636401/I00000013223.dcm
 duplicate case: DX_male/1.3.51.20161025103710.103240489.49626962
 duplicate case: DX_male/1.3.51.20161013093129.103205839.49245755
 ===================================================
-number of total samples finally: 1591
+number of total samples finally: 1592
 number of confict samples finally: 0
 number of duplicate samples finally: 23
 ---------------------------------------------------
-number of male samples: 794
-number of female samples: 797
-number of positive samples: 496
-number of negative samples: 1095
+number of male samples: 788
+number of female samples: 791
+number of positive samples: 492
+number of negative samples: 1087
 ===================================================
-number of training images: 1431
-number of test images: 160
+number of training images: 1421
+number of test images: 158
