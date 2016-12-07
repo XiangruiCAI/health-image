@@ -8,14 +8,13 @@ from singa import loss
 from singa import net as ffnet
 
 
-def create_net(use_cpu=False):
+def create_net(input_shape, use_cpu=False):
     if use_cpu:
         layer.engine = 'singacpp'
     net = ffnet.FeedForwardNet(loss.SoftmaxCrossEntropy(), metric.Accuracy())
-    input = (1, 2021, 2021)
 
     net.add(layer.Conv2D('conv1', nb_kernels=32, kernel=7, stride=3, pad=1,
-        input_sample_shape=input))
+        input_sample_shape=input_shape))
     net.add(layer.Activation('relu1'))
     net.add(layer.MaxPooling2D('pool1', 2, 2, border_mode='valid'))
 
@@ -48,7 +47,9 @@ def create_net(use_cpu=False):
         elif 'gamma' in name:
             initializer.uniform(p, 0, 1)
         elif len(p.shape) > 1:
-            if 'conv' in name:
+            if 'conv1' in name:
+                initializer.gaussian(p, 0, p.size() / 10)
+            elif 'conv' in name:
                 initializer.gaussian(p, 0, p.size())
             else:
                 p.gaussian(0, 0.02)

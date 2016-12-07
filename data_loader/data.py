@@ -4,6 +4,7 @@ import random
 import time
 from multiprocessing import Process, Queue
 from singa import data
+from singa import image_tool
 import dicom
 
 
@@ -67,22 +68,18 @@ def load_from_csv(img_path):
     return new_imgs
 
 
-def load_from_np(img_path):
-    img_path = img_path.replace('dcm', 'npy')
+def load_from_img(img_path):
     new_imgs = []
-    ary = np.fromfile(img_path)
-    new_imgs.append(ary)
+    img_path = img_path.replace('dcm', 'jpeg')
+    img = image_tool.load_img(img_path, grayscale=True)
+    new_imgs.append(img)
     return new_imgs
 
 
-def get_mean(mean_dir, dtype = 'npy'):
-    if dtype == 'npy':
-        mean_path = os.path.join(mean_dir, 'mean.npy')
-        mean = np.fromfile(mean_path)
-        return mean
-    elif dtype == 'csv':
+def get_mean(mean_dir):
+    try:
         mean_path = os.path.join(mean_dir, 'mean.csv')
         mean = np.genfromtxt(mean_path, delimiter = ',')
         return np.asarray(mean, np.float32)
-    else:
-        raise Exception('Unsupported dtype: ', dtype)
+    except Exception as e:
+        print 'except: ', e
