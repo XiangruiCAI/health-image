@@ -14,6 +14,13 @@ from singa.proto import core_pb2
 
 from data_loader import data as dt
 from model import vgg
+from model import vgg_BNDrop
+from model import vgg_BNDrop2
+from model import vgg_deeper
+from model import vgg2
+from model import vgg_512_BNDrop
+from model import vgg_512_BNDrop2
+from model import vgg_1024_BNDrop
 import conf
 
 
@@ -21,7 +28,7 @@ def vgg_lr(epoch):
     return 0.05 / float(1 << (epoch / 25))
 
 
-def train(meta_train, meta_test, data, net, mean, max_epoch, get_lr,
+def train(lr, ssfolder, meta_train, meta_test, data, net, mean, max_epoch, get_lr,
         weight_decay, input_shape, batch_size=100, use_cpu=False):
 
     print 'Start intialization............'
@@ -37,7 +44,7 @@ def train(meta_train, meta_test, data, net, mean, max_epoch, get_lr,
     for (p, specs) in zip(net.param_names(), net.param_specs()):
         opt.register(p, specs)
 
-    dl_train = dt.MImageBatchIter(meta_train, batch_size, dt.load_from_img,
+    dl_train = dt.MImageBatchIter(meta_train, batch_size, dt.load_from_img_enhance,
             shuffle=True, delimiter=' ', image_folder=data, capacity=10)
     dl_train.start()
     dl_test = dt.MImageBatchIter(meta_test, batch_size, dt.load_from_img,
@@ -70,7 +77,7 @@ def train(meta_train, meta_test, data, net, mean, max_epoch, get_lr,
             loss += l
             acc += a
             for (s, p, g) in zip(net.param_names(), net.param_values(), grads):
-                opt.apply_with_lr(epoch, get_lr(epoch), g, p, str(s), b)
+                opt.apply_with_lr(epoch, lr, g, p, str(s), b)
             t3 = time.time()
             # update progress bar
             info = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
@@ -79,15 +86,19 @@ def train(meta_train, meta_test, data, net, mean, max_epoch, get_lr,
             #utils.update_progress(b * 1.0 / num_train_batch, info)
 
         disp = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
-         + ' training loss = %f, training accuracy = %f, lr = %f' \
-            % (loss / num_train_batch, acc / num_train_batch, get_lr(epoch))
+        + ', epoch %d: training loss = %f, training accuracy = %f, lr = %f' \
+            % (epoch, loss / num_train_batch, acc / num_train_batch, lr)
         logging.info(disp)
         print disp
 
         if epoch % 50 == 0 and epoch > 0:
-            net.save('model-%d.bin' % epoch, buffer_size=100)
+            try:
+                net.save(os.path.join(ssfolder, 'model-%d' % epoch), buffer_size=200)
+            except Exception as e:
+                print e
+                net.save(os.path.join(ssfolder, 'model-%d' % epoch), buffer_size=300)
             sinfo = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
-            + ', epoch %d: save model in model-%d.bin' % (epoch, epoch)
+            + ', epoch %d: save model in %s' % (epoch, os.path.join(ssfolder, 'model-%d.bin' % epoch))
             logging.info(sinfo)
             print sinfo
 
@@ -119,26 +130,37 @@ def train(meta_train, meta_test, data, net, mean, max_epoch, get_lr,
             dominator += 1
             #print datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
             #+ ' test loss = %f, test accuracy = %f' % (l, a)
-
 	acc /= dominator
         loss /= dominator
         disp = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
-        + ' test loss = %f, test accuracy = %f' % (loss, acc)
+        + ', epoch %d: test loss = %f, test accuracy = %f' % (epoch, loss, acc)
         logging.info(disp)
         print disp
-	if acc > best_acc + 0.005:
+
+        if acc > best_acc + 0.005:
             best_acc = acc
             best_loss = loss
-            nb_epoch_for_best_acc = epoch
+            nb_epoch_for_best_acc = 0
+        else:
+            nb_epoch_for_best_acc += 1
+            if nb_epoch_for_best_acc > 8:
+                break
+            elif nb_epoch_for_best_acc % 4 ==0:
+                lr /= 10
+                logging.info("Decay the learning rate from %f to %f" %(lr*10, lr))
 
-    net.save('model.bin', buffer_size=100)
-    sinfo = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') + ', save final model in model.bin'
+    try:
+        net.save(str(os.path.join(ssfolder, 'model')), buffer_size=200)
+    except Exception as e:
+        net.save(str(os.path.join(ssfolder, 'model')), buffer_size=300)
+    sinfo = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
+    + ', save final model in %s' % os.path.join(ssfolder, 'model.bin')
     logging.info(sinfo)
     print sinfo
 
     dl_train.end()
     dl_test.end()
-    return (best_acc, best_loss, nb_epoch_for_best_acc)
+    return (best_acc, best_loss)
 
 
 if __name__ == '__main__':
@@ -150,22 +172,42 @@ if __name__ == '__main__':
     best_acc = 0.0
     best_loss = 0
     best_idx = -1
-    for i in range(1):
-        #cnf.gen_conf()
+    for i in range(30):
+        ssfolder = cnf.snapshot_folder + str(i)
+        if not os.path.isdir(ssfolder):
+            os.makedirs(ssfolder)
+        cnf.gen_conf()
         with open(os.path.join(log_dir, '%d.conf' % i), 'w') as fconf:
             cnf.dump(fconf)
         try:
             if cnf.net == 'vgg':
                 net = vgg.create_net(cnf.input_shape, cnf.use_cpu)
+            if cnf.net == 'vgg2':
+                net = vgg2.create_net(cnf.input_shape, cnf.use_cpu)
+            elif cnf.net == 'vgg_BNDrop':
+                net = vgg_BNDrop.create_net(cnf.input_shape, cnf.use_cpu)
+            elif cnf.net == 'vgg_BNDrop2':
+                net = vgg_BNDrop2.create_net(cnf.input_shape, cnf.use_cpu)
+            elif cnf.net == 'vgg_deeper':
+                net = vgg_deeper.create_net(cnf.input_shape, cnf.use_cpu)
+            elif cnf.net == 'vgg_512_BNDrop':
+                net = vgg_512_BNDrop.create_net(cnf.input_shape, cnf.use_cpu)
+            elif cnf.net == 'vgg_512_BNDrop2':
+                net = vgg_512_BNDrop2.create_net(cnf.input_shape, cnf.use_cpu)
+            elif cnf.net == 'vgg_1024_BNDrop':
+                net = vgg_1024_BNDrop.create_net(cnf.input_shape, cnf.use_cpu)
+            else:
+                raise Exception('Unsupported net: ', cnf.net)
+            logging.info('The %d-th trial' % i)
             mean = dt.get_mean(cnf.input_folder)
-            acc,loss,epoch = train(cnf.train_file, cnf.test_file, cnf.input_folder, net, mean,
+            acc,loss= train(cnf.lr, ssfolder, cnf.train_file, cnf.test_file, cnf.input_folder, net, mean,
                     cnf.num_epoch, vgg_lr, cnf.decay, cnf.input_shape, cnf.batch_size, cnf.use_cpu)
             logging.info('The best test accuracy for %d-th trial is %f, with loss=%f' % (i, acc, loss))
             if best_acc < acc:
                 best_acc = acc
                 best_loss = loss
                 best_idx = i
-            logging.info('The best test accuracy so far is %f, with loss=%f, from the %d-th conf'
+            logging.info('The best test accuracy so far is %f, with loss=%f, for the %d-th conf'
                     % (best_acc, best_loss, best_idx))
         except Exception as e:
             print "except", e

@@ -70,10 +70,27 @@ def load_from_csv(img_path):
 
 def load_from_img(img_path):
     new_imgs = []
-    img_path = img_path.replace('dcm', 'jpeg')
+    if 'jpeg' in img_path:
+        img_path = img_path.replace('dcm', 'jpeg')
+    elif 'png' in img_path:
+        img_path = img_path.replace('dcm', 'png')
+    else:
+        raise Exception('Unsupported image format: ', img_path)
     img = image_tool.load_img(img_path, grayscale=True)
     new_imgs.append(img)
     return new_imgs
+
+
+def load_from_img_enhance(img_path):
+    loader = image_tool.ImageTool()
+    new_imgs = []
+    if 'jpeg' in img_path:
+        img_path = img_path.replace('dcm', 'jpeg')
+    elif 'png' in img_path:
+        img_path = img_path.replace('dcm', 'png')
+    else:
+        raise Exception('Unsupported image format: ', img_path)
+    return loader.load(img_path, grayscale=True).rotate_by_range((-10, 10)).enhance(0.2).get()
 
 
 def get_mean(mean_dir):

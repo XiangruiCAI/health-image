@@ -5,20 +5,25 @@ import random
 class Conf():
     def __init__(self):
         self.num_epoch = 200
-        self.batch_size = 32
+        self.batch_size = 16
         self.use_cpu = False
-        self.input_folder="./data/resizejpeg2021"
+        self.size = 2021
+        self.input_folder="./data/resizejpeg" + str(self.size)
         self.log_dir = 'log'
         self.train_file="./meta-process/meta_train.csv"
         self.test_file="./meta-process/meta_test.csv"
-        self.input_shape = (1, 2021, 2021)
+        self.input_shape = (1, self.size, self.size)
+        #self.input_shape = (1, 2021, 2021)
+        self.snapshot_folder = './snapshot'
+        self.best_model = ''
 
         #self.small_size = 112
         #self.large_size = 192
         #self.crop_size = 96
         self.lr = 0.01
         self.decay = 5e-4
-        self.net = 'vgg'
+        # currently, supported models=['vgg', 'vgg_BNDrop', 'vgg_BNDrop2', 'vgg_512_BNDrop', 'vgg_1024_BNDrop]
+        self.net = 'vgg_BNDrop2'
 
 
     def dump(self, f):
@@ -35,6 +40,8 @@ class Conf():
         f.write('input sample shape: %s\n' % str(self.input_shape))
         f.write('learning rate: %f\n' % self.lr)
         f.write('weight decay: %f\n' % self.decay)
+        f.write('snapshot folder prefix: %s\n' % self.snapshot_folder)
+        f.write('network: %s\n' % self.net)
         f.write('===============================================\n')
 
 
@@ -54,7 +61,7 @@ class Conf():
         #        break
 
 
-        lr = [0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001]
+        lr = [0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001]
         self.lr = lr[random.randint(0, len(lr) - 1)]
 
         decay = [1e-3, 5e-4, 1e-4, 5e-5, 1e-5]
