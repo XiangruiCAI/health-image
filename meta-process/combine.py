@@ -27,6 +27,7 @@ def find_label(path):
             uid = item[1].strip()
             report_desc = item[2].strip().strip('\"').replace('、', '')
             if uid in path:
+                '''
                 if report_desc == '心肺膈未见明显异常。' \
                     or report_desc == '心肺膈未见明确异常。' \
                     or report_desc == '心肺膈未见明显病变。' \
@@ -41,6 +42,9 @@ def find_label(path):
                     or report_desc == '心肺膈未见明确异常，请结合临床，必要时CT进一步观察。' \
                     or report_desc == '心肺膈未见明确异常，请结合临床查体，必要时进一步检查。' \
                     or report_desc == '胸正位片未见明显异常。':
+                '''
+                if '未见' in report_desc and ('异常' in report_desc or '病变' in report_desc) \
+                    and ('PICC' not in report_desc):
                     label = 1
                 else:
                     if '心肺膈未见明显异常' in report_desc and 'PICC' in report_desc:

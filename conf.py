@@ -8,14 +8,14 @@ class Conf():
         self.batch_size = 16
         self.use_cpu = False
         self.size = 2021
-        self.input_folder="./data/resizejpeg" + str(self.size)
+        self.input_folder="./data/resizepng" + str(self.size)
         self.log_dir = 'log'
         self.train_file="./meta-process/meta_train.csv"
         self.test_file="./meta-process/meta_test.csv"
         self.input_shape = (1, self.size, self.size)
         #self.input_shape = (1, 2021, 2021)
         self.snapshot_folder = './snapshot'
-        self.best_model = ''
+        self.best_model = './params14/snapshot7/model'
 
         #self.small_size = 112
         #self.large_size = 192

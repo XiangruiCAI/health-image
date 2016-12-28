@@ -119,26 +119,32 @@ def meta_data(iline):
         if path == '':
             return meta
 
-        if report_desc == '心肺膈未见明显异常。' \
-                or report_desc == '心肺膈未见明确异常。' \
-                or report_desc == '心肺膈未见明显病变。' \
-                or report_desc == '心肺膈未见明确病变。' \
-                or report_desc == '双肺、心、膈未见明确异常。' \
-                or report_desc == '双肺、心、膈未见明显异常。' \
-                or report_desc == '双肺、心膈未见明确异常。' \
-                or report_desc == '双肺未见明确病变。' \
-                or report_desc == '双肺、心、膈未见异常。' \
-                or report_desc == '心、肺、膈未见明显异常。' \
-                or report_desc == '心、肺、双膈未见明显异常。' \
-                or report_desc == '心肺膈未见明确异常，请结合临床，必要时CT进一步观察。' \
-                or report_desc == '心肺膈未见明确异常，请结合临床查体，必要时进一步检查。' \
-                or report_desc == '胸正位片未见明显异常。':
+        '''
+        if '心肺膈未见明显异常。' in report_desc \
+                or '心肺膈未见明确异常。' in report_desc \
+                or '心肺膈未见明显病变。' in report_desc \
+                or '心肺膈未见明确病变。' in report_desc \
+                or '双肺、心、膈未见明确异常。' in report_desc \
+                or '双肺、心、膈未见明显异常。' in report_desc \
+                or '双肺、心膈未见明确异常。' in report_desc \
+                or '双肺未见明确病变。' in report_desc \
+                or '双肺、心、膈未见异常。' in report_desc \
+                or '心、肺、膈未见明显异常。' in report_desc \
+                or '心、肺、双膈未见明显异常。' in report_desc \
+                or '心肺膈未见明确异常，请结合临床，必要时CT进一步观察。' in report_desc \
+                or '心肺膈未见明确异常，请结合临床查体，必要时进一步检查。' in report_desc \
+                or '胸部未见明显异常。' in report_desc \
+                or '胸正位片未见明显异常。' in report_desc:
+        '''
+        if '未见' in report_desc and ('异常' in report_desc or '病变' in report_desc) \
+            and ('PICC' not in report_desc):
             label = 1
         else:
             if '心肺膈未见明显异常' in report_desc and 'PICC' in report_desc:
                 LOG.write('Fuzzy case(心肺膈未见明显异常 and PICC管): ' + uid + '\n')
                 return meta
             label = 0
+        print 'report_desc=', report_desc, ': label=', label
 
         if IMAGEMALE in path:
             gender = 1

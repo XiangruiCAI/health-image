@@ -52,15 +52,15 @@ def create_net(input_shape, use_cpu=False):
 
     net.add(layer.Flatten('flat'))
 
-    net.add(layer.Dense('ip6', 512))
+    net.add(layer.Dense('ip6', 256))
     net.add(layer.BatchNormalization('bn6'))
     net.add(layer.Activation('relu6'))
-    net.add(layer.Dropout('dropout6', 0.5))
+    net.add(layer.Dropout('dropout6', 0.2))
 
-    net.add(layer.Dense('ip7', 32))
+    net.add(layer.Dense('ip7', 16))
     net.add(layer.BatchNormalization('bn7'))
     net.add(layer.Activation('relu7'))
-    net.add(layer.Dropout('dropout7', 0.5))
+    net.add(layer.Dropout('dropout7', 0.2))
 
     net.add(layer.Dense('ip8', 2))
 

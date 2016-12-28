@@ -44,7 +44,7 @@ def train(lr, ssfolder, meta_train, meta_test, data, net, mean, max_epoch, get_l
     for (p, specs) in zip(net.param_names(), net.param_specs()):
         opt.register(p, specs)
 
-    dl_train = dt.MImageBatchIter(meta_train, batch_size, dt.load_from_img_enhance,
+    dl_train = dt.MImageBatchIter(meta_train, batch_size, dt.load_from_img,
             shuffle=True, delimiter=' ', image_folder=data, capacity=10)
     dl_train.start()
     dl_test = dt.MImageBatchIter(meta_test, batch_size, dt.load_from_img,
@@ -103,7 +103,7 @@ def train(lr, ssfolder, meta_train, meta_test, data, net, mean, max_epoch, get_l
             print sinfo
 
         loss, acc = 0.0, 0.0
-        dominator = num_test_batch
+        #dominator = num_test_batch
         #print 'num_test_batch: ', num_test_batch
         for b in range(num_test_batch):
             x, y = dl_test.next()
@@ -111,8 +111,8 @@ def train(lr, ssfolder, meta_train, meta_test, data, net, mean, max_epoch, get_l
             tx.copy_from_numpy(x)
             ty.copy_from_numpy(y)
             l, a = net.evaluate(tx, ty)
-            loss += l
-            acc += a
+            loss += l * batch_size
+            acc += a * batch_size
             #print datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
             #+ ' batch %d, test loss = %f, test accuracy = %f' % (b, l, a)
 
@@ -125,13 +125,13 @@ def train(lr, ssfolder, meta_train, meta_test, data, net, mean, max_epoch, get_l
             tx_rmd.copy_from_numpy(x[0:remainder,:,:])
             ty_rmd.copy_from_numpy(y[0:remainder,])
             l, a = net.evaluate(tx_rmd, ty_rmd)
-            loss += l
-            acc += a
-            dominator += 1
+            loss += l * remainder
+            acc += a * remainder
+            #dominator += 1
             #print datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
             #+ ' test loss = %f, test accuracy = %f' % (l, a)
-	acc /= dominator
-        loss /= dominator
+	acc /= num_test
+        loss /= num_test
         disp = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
         + ', epoch %d: test loss = %f, test accuracy = %f' % (epoch, loss, acc)
         logging.info(disp)

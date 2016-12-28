@@ -90,7 +90,7 @@ def load_from_img_enhance(img_path):
         img_path = img_path.replace('dcm', 'png')
     else:
         raise Exception('Unsupported image format: ', img_path)
-    return loader.load(img_path, grayscale=True).rotate_by_range((-10, 10)).enhance(0.2).get()
+    return loader.load(img_path, grayscale=True).rotate_by_range((-5, 5)).enhance(0.1).get()
 
 
 def get_mean(mean_dir):

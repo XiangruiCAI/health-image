@@ -28,8 +28,8 @@ number of duplicate samples finally: 23
 ---------------------------------------------------
 number of male samples: 788
 number of female samples: 791
-number of positive samples: 492
-number of negative samples: 1087
+number of positive samples: 758
+number of negative samples: 821
 ===================================================
 number of training images: 1421
 number of test images: 158
