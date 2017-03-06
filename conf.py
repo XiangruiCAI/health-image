@@ -7,23 +7,24 @@ class Conf():
         self.num_epoch = 200
         self.batch_size = 16
         self.use_cpu = False
-        self.size = 2021
-        self.input_folder="./data/resizepng" + str(self.size)
+        self.size = 256
+        self.input_folder='./data/images'
         self.log_dir = 'log'
-        self.train_file="./meta-process/meta_train.csv"
-        self.test_file="./meta-process/meta_test.csv"
+        self.train_file='./preprocess/metalist/train.csv'
+        self.test_file='./preprocess/metalist/test.csv'
         self.input_shape = (1, self.size, self.size)
-        #self.input_shape = (1, 2021, 2021)
+        # depth for resnet
+        self.depth = 18
         self.snapshot_folder = './snapshot'
         self.best_model = './params14/snapshot7/model'
 
         #self.small_size = 112
         #self.large_size = 192
-        #self.crop_size = 96
-        self.lr = 0.01
+        self.crop_size = 224
+        self.lr = 0.1
         self.decay = 5e-4
         # currently, supported models=['vgg', 'vgg_BNDrop', 'vgg_BNDrop2', 'vgg_512_BNDrop', 'vgg_1024_BNDrop]
-        self.net = 'vgg_BNDrop2'
+        self.net = 'resnet'
 
 
     def dump(self, f):
@@ -42,6 +43,8 @@ class Conf():
         f.write('weight decay: %f\n' % self.decay)
         f.write('snapshot folder prefix: %s\n' % self.snapshot_folder)
         f.write('network: %s\n' % self.net)
+        f.write('depth: %d\n' % self.depth)
+        f.write('crop size: %d\n' % self.crop_size)
         f.write('===============================================\n')
 
 
