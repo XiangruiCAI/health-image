@@ -62,7 +62,7 @@ def train(cnf, ssfolder, net, mean, dl_train, dl_test):
             t1 = time.time()
             x, y = dl_train.next()
             #print x.shape
-            x -= mean
+            x -= mean[np.newaxis, :, np.newaxis, np.newaxis]
             t2 = time.time()
             tx.copy_from_numpy(x)
             ty.copy_from_numpy(y)
@@ -85,7 +85,7 @@ def train(cnf, ssfolder, net, mean, dl_train, dl_test):
         logging.info(disp)
         print disp
 
-        if epoch % 50 == 0 and epoch > 0:
+        if epoch % 5 == 0 and epoch > 0:
             try:
                 net.save(os.path.join(ssfolder, 'model-%d' % epoch), buffer_size=200)
             except Exception as e:
@@ -104,7 +104,7 @@ def train(cnf, ssfolder, net, mean, dl_train, dl_test):
         for b in range(num_test_batch):
             x, y = dl_test.next()
             y_truth.extend(y.tolist())
-            x -= mean
+            x -= mean[np.newaxis, :, np.newaxis, np.newaxis]
             tx.copy_from_numpy(x)
             ty.copy_from_numpy(y)
             l, a = net.evaluate(tx, ty)
@@ -116,11 +116,13 @@ def train(cnf, ssfolder, net, mean, dl_train, dl_test):
             #print datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
             #+ ' batch %d, test loss = %f, test accuracy = %f' % (b, l, a)
 
+        # if use data loader in singa, there should be no remainder.
+        # i.e., num_test % batch_size == 0
         if remainder > 0:
             #print 'remainder: ', remainder
             x, y = dl_test.next()
             y_truth.extend(y[0:remainder,].tolist())
-            x -= mean
+            x -= mean[np.newaxis, :, np.newaxis, np.newaxis]
             tx_rmd = tensor.Tensor((remainder,) + cnf.input_shape, dev)
             ty_rmd = tensor.Tensor((remainder,), dev, core_pb2.kInt)
             tx_rmd.copy_from_numpy(x[0:remainder,:,:])
@@ -179,7 +181,7 @@ if __name__ == '__main__':
     best_acc = 0.0
     best_loss = 0
     best_idx = -1
-    for i in range(1):
+    for i in range(20):
         ssfolder = cnf.snapshot_folder + str(i)
         if not os.path.isdir(ssfolder):
             os.makedirs(ssfolder)
@@ -189,10 +191,10 @@ if __name__ == '__main__':
 
         def train_transform(path):
             global train_tool
-            return train_tool.load(path).rotate_by_range((-5, 5)).random_crop((cnf.crop_size, cnf.crop_size)).enhance(0.1).get()
+            return train_tool.load(path).resize_by_list([cnf.crop_size]).rotate_by_range((-5, 5)).enhance(0.1).get()
         def validate_transform(path):
             global validate_tool
-            return validate_tool.load(path).crop5((cnf.crop_size, cnf.crop_size), 5).get()
+            return validate_tool.load(path).resize_by_list([cnf.crop_size]).get()
 
         dl_train = data.ImageBatchIter(cnf.train_file, cnf.batch_size, train_transform, shuffle=True, delimiter=' ', image_folder=cnf.input_folder, capacity=10)
         dl_test = data.ImageBatchIter(cnf.test_file, cnf.batch_size, validate_transform, shuffle=False, delimiter=' ', image_folder=cnf.input_folder, capacity=10)
@@ -202,7 +204,8 @@ if __name__ == '__main__':
             else:
                 raise Exception('Unsupported net: ', cnf.net)
             logging.info('The %d-th trial' % i)
-            mean = 122.4551
+            #mean = 122.4551
+            mean = np.asarray([124.76510401, 124.76510401, 124.76510401])
             acc, loss = train(cnf, ssfolder, net, mean, dl_train, dl_test)
             #acc,loss= train(cnf.lr, ssfolder, cnf.train_file, cnf.test_file, cnf.input_folder, net, mean,
             #        cnf.num_epoch, vgg_lr, cnf.decay, cnf.input_shape, cnf.batch_size, cnf.use_cpu)

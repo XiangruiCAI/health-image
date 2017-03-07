@@ -17,6 +17,7 @@
 ''' This models are created following https://github.com/facebook/fb.resnet.torch.git
 and https://github.com/szagoruyko/wide-residual-networks
 '''
+import math
 from singa.layer import Conv2D, Activation, MaxPooling2D, AvgPooling2D,\
         Split, Merge, Flatten, Dense, BatchNormalization, Softmax
 from singa import net as ffnet
@@ -215,7 +216,23 @@ def create_resnet(depth=18):
     net.add(Dense('dense', 2))
 
     print 'Model parameter intialization............'
-    init_params(net)
+    for (p, name) in zip(net.param_values(), net.param_names()):
+        print name, p.shape
+        if 'mean' in name or 'beta' in name:
+            p.set_value(0.0)
+        elif 'var' in name:
+            p.set_value(1.0)
+        elif 'gamma' in name:
+            initializer.uniform(p, 0, 1)
+        elif len(p.shape) > 1:
+            if 'conv' in name:
+                initializer.gaussian(p, 0, p.size())
+            else:
+                p.gaussian(0, 0.02)
+        else:
+            p.set_value(0)
+        print name, p.l1()
+
     return net
 
 def create_preact_resnet(depth=200):

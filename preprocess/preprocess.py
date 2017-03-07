@@ -7,6 +7,7 @@ import os
 import random
 import csv
 import numpy as np
+import PIL
 from PIL import Image
 
 
@@ -110,37 +111,43 @@ class MetaBuilder(object):
             log.write('number of positive samples (normal): %d\n' % num_pos)
             log.write('number of negative samples (abnormal): %d\n' % num_neg)
             self.save_(log)
-            self.mean_(log)
 
     def save_(self, log):
         '''save train and test list'''
         with open(self.path_train, 'w') as train, open(self.path_test, 'w') as test:
             wtrain = csv.writer(train, delimiter = ' ')
             wtest = csv.writer(test, delimiter= ' ')
-            random.shuffle(self.meta)
-            spoint = int(len(self.meta) * self.r)
+            meta_over = []
             for i, item in enumerate(self.meta):
+                if item[-1] == 1:
+                    meta_over.extend([item, item, item])
+            meta = self.meta + meta_over
+            random.shuffle(meta)
+            spoint = int(len(meta) * self.r)
+            for i, item in enumerate(meta):
                 if i < spoint:
                     wtrain.writerow(item)
                 else:
                     wtest.writerow(item)
             print 'number of training samples: %d' % spoint
-            print 'number of test samples: %d' % (len(self.meta) - spoint)
+            print 'number of test samples: %d' % (len(meta) - spoint)
             log.write('number of training samples: %d\n' % spoint)
-            log.write('number of test samples: %d\n' % (len(self.meta) - spoint))
+            log.write('number of test samples: %d\n' % (len(meta) - spoint))
+            self.mean_(log, meta)
 
-    def mean_(self, log):
+    def mean_(self, log, meta):
         img_list = []
-        for item in self.meta:
+        for item in meta:
             img_path = os.path.join(self.path, item[0])
             img = Image.open(img_path)
-            img = img.convert('L')
+            img = img.convert('RGB')
+            img = img.resize((224, 224), PIL.Image.ANTIALIAS)
             img_list.append(np.asarray(img))
         img_array = np.asarray(img_list)
-        mean_pixel = img_array.mean()
-        print 'mean of pixel grayscale: %.4f' % mean_pixel
-        log.write('mean of pixel grayscale: %.4f\n' % mean_pixel)
-
+        print img_array.shape
+        mean_pixel = np.mean(img_array, axis=(0, 1, 2))
+        print 'mean of pixel grayscale: ', mean_pixel
+        log.write('mean of pixel grayscale: (%.4f, %.4f, %.4f)\n' % tuple(mean_pixel.tolist()))
 
 def gen_meta():
     '''generate meta list for XRay folder'''
