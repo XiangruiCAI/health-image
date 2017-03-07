@@ -5,14 +5,15 @@ import random
 class Conf():
     def __init__(self):
         self.num_epoch = 200
-        self.batch_size = 16
+        self.batch_size = 80
         self.use_cpu = False
         self.size = 256
-        self.input_folder='./data/images'
+        self.crop_size = 224
+        self.input_folder='./data/xray'
         self.log_dir = 'log'
         self.train_file='./preprocess/metalist/train.csv'
         self.test_file='./preprocess/metalist/test.csv'
-        self.input_shape = (1, self.size, self.size)
+        self.input_shape = (3, self.crop_size, self.crop_size)
         # depth for resnet
         self.depth = 18
         self.snapshot_folder = './snapshot'
@@ -20,9 +21,8 @@ class Conf():
 
         #self.small_size = 112
         #self.large_size = 192
-        self.crop_size = 224
         self.lr = 0.1
-        self.decay = 5e-4
+        self.decay = 1e-4
         # currently, supported models=['vgg', 'vgg_BNDrop', 'vgg_BNDrop2', 'vgg_512_BNDrop', 'vgg_1024_BNDrop]
         self.net = 'resnet'
 

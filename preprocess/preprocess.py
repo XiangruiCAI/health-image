@@ -152,7 +152,7 @@ def gen_meta():
     path_log = 'log.csv'
     label_dict = {'abnormal_nodule': 1, 'normal': 0,
                   'abnormal_nodule_0228': 1, 'normal_0228': 0}
-    path = '../data/images'
+    path = '../data/xray'
     meta_gen = MetaBuilder(os.path.join(result_dir, path_train), os.path.join(result_dir, path_test), os.path.join(
         result_dir, path_log), path, label_dict)
     meta_gen.gen()

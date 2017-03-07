@@ -22,8 +22,10 @@ from singa.layer import Conv2D, Activation, MaxPooling2D, AvgPooling2D,\
 from singa import net as ffnet
 from singa import initializer
 from singa import layer
+from singa import metric
+from singa import loss
 
-ffnet.verbose=True
+#ffnet.verbose=True
 
 conv_bias = False
 
@@ -192,12 +194,11 @@ def create_addbn_resnet(depth=50):
 
 def create_resnet(depth=18):
     '''Original resnet, where the there is a relue after the addition layer'''
-    net = ffnet.FeedForwardNet()
-    net.add(Conv2D('input-conv', 64, 7, 2, pad=3, use_bias=False, input_sample_shape=(1, 224, 224)))
+    net = ffnet.FeedForwardNet(loss.SoftmaxCrossEntropy(), metric.Accuracy())
+    net.add(Conv2D('input-conv', 64, 7, 2, pad=3, use_bias=False, input_sample_shape=(3, 224, 224)))
     net.add(BatchNormalization('input-bn'))
     net.add(Activation('input_relu'))
     net.add(MaxPooling2D('input_pool', 3, 2, pad=1))
-    print 'depth: ', depth
     conf = cfg[depth]
     if depth > 34:
         stage(0, net, conf[0], 64, 64, 256, 1, bottleneck)
@@ -211,7 +212,10 @@ def create_resnet(depth=18):
         stage(3, net, conf[3], 256, 512, 512, 2, basicblock)
     net.add(AvgPooling2D('avg', 7, 1, pad=0))
     net.add(Flatten('flat'))
-    net.add(Dense('dense', 1000))
+    net.add(Dense('dense', 2))
+
+    print 'Model parameter intialization............'
+    init_params(net)
     return net
 
 def create_preact_resnet(depth=200):
