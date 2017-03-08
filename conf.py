@@ -10,8 +10,8 @@ class Conf():
         self.size = 2021
         self.input_folder="./data/resizepng" + str(self.size)
         self.log_dir = 'log'
-        self.train_file="./meta-process/meta_train.csv"
-        self.test_file="./meta-process/meta_test.csv"
+        self.train_file="./meta_process/meta_train.csv"
+        self.test_file="./meta_process/meta_test.csv"
         self.input_shape = (1, self.size, self.size)
         #self.input_shape = (1, 2021, 2021)
         self.snapshot_folder = './snapshot'
