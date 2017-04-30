@@ -26,7 +26,7 @@ from singa import layer
 from singa import metric
 from singa import loss
 
-#ffnet.verbose=True
+ffnet.verbose=False
 
 conv_bias = False
 

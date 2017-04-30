@@ -5,26 +5,30 @@ import random
 class Conf():
     def __init__(self):
         self.num_epoch = 200
-        self.batch_size = 80
+        self.batch_size = 40
         self.use_cpu = False
         self.size = 256
+        # currently, crop_size is the input shape
         self.crop_size = 224
         self.input_folder='./data/xray'
         self.log_dir = 'log'
-        self.train_file='./preprocess/metalist/train.csv'
-        self.test_file='./preprocess/metalist/test.csv'
+        self.train_file='./preprocess/metalist/'
+        self.test_file='./preprocess/metalist/'
         self.input_shape = (3, self.crop_size, self.crop_size)
         # depth for resnet
         self.depth = 18
         self.snapshot_folder = './snapshot'
-        self.best_model = './params14/snapshot7/model'
+        # self.best_model = './params14/snapshot7/model'
 
-        #self.small_size = 112
-        #self.large_size = 192
-        self.lr = 0.1
+        self.lr = 5e-4
         self.decay = 1e-4
         # currently, supported models=['vgg', 'vgg_BNDrop', 'vgg_BNDrop2', 'vgg_512_BNDrop', 'vgg_1024_BNDrop]
         self.net = 'resnet'
+        # whether to tune the hyperparameters or to run cross validation
+        # choices = ['tune', 'cv']
+        self.mode = 'cv'
+        # number of folds for cross validation
+        self.k_fold = 10
 
 
     def dump(self, f):
