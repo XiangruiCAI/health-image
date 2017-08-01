@@ -87,3 +87,14 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# add by Xiangrui
+*.csv
+*.log
+*.bin
+*.out
+*.txt
+*.tar.gz
+*.tgz
+*.conf
+data/

@@ -75,19 +75,19 @@ def train(cnf, dev, ssfolder, net, mean, dl_train, dl_test):
         logging.info(disp)
         print disp
 
-        if epoch % 5 == 0 and epoch > 0:
-            try:
-                net.save(os.path.join(ssfolder, 'model-%d' %
-                                      epoch), buffer_size=200)
-            except Exception as e:
-                print e
-                net.save(os.path.join(ssfolder, 'model-%d' %
-                                      epoch), buffer_size=300)
-            sinfo = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
-                + ', epoch %d: save model in %s' % (
-                    epoch, os.path.join(ssfolder, 'model-%d.bin' % epoch))
-            logging.info(sinfo)
-            print sinfo
+        # if epoch % 5 == 0 and epoch > 0:
+        #     try:
+        #         net.save(os.path.join(ssfolder, 'model-%d' %
+        #                               epoch), buffer_size=200)
+        #     except Exception as e:
+        #         print e
+        #         net.save(os.path.join(ssfolder, 'model-%d' %
+        #                               epoch), buffer_size=300)
+        #     sinfo = datetime.datetime.now().strftime('%b-%d-%y %H:%M:%S') \
+        #         + ', epoch %d: save model in %s' % (
+        #             epoch, os.path.join(ssfolder, 'model-%d.bin' % epoch))
+        #     logging.info(sinfo)
+        #     print sinfo
 
         loss, acc = 0.0, 0.0
         #dominator = num_test_batch
@@ -165,7 +165,7 @@ def predict(cnf, dev, net, mean, dl_test, ssfolder, topk=5):
     ty = tensor.Tensor((cnf.batch_size,), dev, core_pb2.kInt)
     ground_truth = []
     predict = []
-    print 'num_test_batch: ', num_test_batch
+    #print 'num_test_batch: ', num_test_batch
     for b in range(num_test_batch):
         # print 'batch ', b
         x, y = dl_test.next()
@@ -219,29 +219,32 @@ def hp_tune(cnf, dev):
     logging.basicConfig(filename=os.path.join(
         log_dir, 'log.txt'), format='%(message)s', level=logging.INFO)
 
+    ss_dir = os.path.join(cnf.snapshot_folder, cnf.mode +
+                       datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+    os.makedirs(ss_dir)
     best_acc = 0.0
     best_loss = 0
     best_idx = -1
     for i in range(20):
-        ssfolder = os.path.join(cnf.snapshot_folder, cnf.mode + str(i))
+        ssfolder = os.path.join(ss_dir, str(i))
         if not os.path.isdir(ssfolder):
             os.makedirs(ssfolder)
         cnf.gen_conf()
         with open(os.path.join(log_dir, '%d.conf' % i), 'w') as fconf:
             cnf.dump(fconf)
 
-        dl_train = data.ImageBatchIter(cnf.train_file + 'train0.csv', cnf.batch_size, train_transform,
-                                       shuffle=True, delimiter=',', image_folder=cnf.input_folder, capacity=10)
-        dl_test = data.ImageBatchIter(cnf.test_file + 'test0.csv', cnf.batch_size, validate_transform,
-                                      shuffle=False, delimiter=',', image_folder=cnf.input_folder, capacity=10)
         try:
             if cnf.net == 'resnet':
                 net = resnet.create_net(cnf.net, cnf.depth, cnf.use_cpu)
             else:
                 raise Exception('Unsupported net: ', cnf.net)
             logging.info('The %d-th trial' % i)
-            #mean = 122.4551
-            mean = np.asarray([124.76510401, 124.76510401, 124.76510401])
+            dl_train = data.ImageBatchIter(os.path.join(cnf.train_file, 'train0.csv'), cnf.batch_size, train_transform,
+                                           shuffle=True, delimiter=',', image_folder=cnf.input_folder, capacity=10)
+            dl_test = data.ImageBatchIter(os.path.join(cnf.test_file, 'test0.csv'), cnf.batch_size, validate_transform,
+                                          shuffle=False, delimiter=',', image_folder=cnf.input_folder, capacity=10)
+            #mean = np.asarray([124.76510401, 124.76510401, 124.76510401])
+            mean = np.asarray(cnf.mean)
             # train
             acc, loss = train(cnf, dev, ssfolder, net, mean, dl_train, dl_test)
             # acc,loss= train(cnf.lr, ssfolder, cnf.train_file, cnf.test_file, cnf.input_folder, net, mean,
@@ -256,7 +259,9 @@ def hp_tune(cnf, dev):
             logging.info('The best test accuracy so far is %f, with loss=%f, for the %d-th conf'
                          % (best_acc, best_loss, best_idx))
             # test
-            pred, truth = predict(net, )
+            # best_model = os.path.join(ssfolder, 'best_model')
+            # pred, truth = predict(cnf, dev, net, mean,
+            #                       dl_test, best_model, topk=1)
         except Exception as e:
             print "except", e
 
@@ -270,12 +275,16 @@ def cross_validate(cnf, dev):
     logging.basicConfig(filename=os.path.join(
         log_dir, 'log.txt'), format='%(message)s', level=logging.INFO)
 
+    ss_dir = os.path.join(cnf.snapshot_folder, cnf.mode +
+                       datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+    os.makedirs(ss_dir)
+
     for i in range(cnf.k_fold):
-        ssfolder = os.path.join(cnf.snapshot_folder, cnf.mode + str(i))
+        ssfolder = os.path.join(ss_dir, str(i))
         if not os.path.isdir(ssfolder):
             os.makedirs(ssfolder)
-        train_file = cnf.train_file + 'train%d.csv' % i
-        test_file = cnf.test_file + 'test%d.csv' % i
+        train_file = os.path.join(cnf.train_file, 'train%d.csv' % i)
+        test_file = os.path.join(cnf.test_file, 'test%d.csv' % i)
         try:
             if cnf.net == 'resnet':
                 net = resnet.create_net(cnf.net, cnf.depth, cnf.use_cpu)
@@ -286,7 +295,8 @@ def cross_validate(cnf, dev):
                                            shuffle=True, delimiter=',', image_folder=cnf.input_folder, capacity=10)
             dl_test = data.ImageBatchIter(test_file, cnf.batch_size, validate_transform,
                                           shuffle=False, delimiter=',', image_folder=cnf.input_folder, capacity=10)
-            mean = np.asarray([124.76510401, 124.76510401, 124.76510401])
+            #mean = np.asarray([124.76510401, 124.76510401, 124.76510401])
+            mean = np.asarray(cnf.mean)
             # train
             acc, loss = train(cnf, dev, ssfolder, net, mean, dl_train, dl_test)
             # acc,loss= train(cnf.lr, ssfolder, cnf.train_file, cnf.test_file, cnf.input_folder, net, mean,

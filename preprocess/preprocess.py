@@ -15,7 +15,7 @@ from PIL import Image
 class MetaBuilder(object):
     '''Build meta file for XRay image classification'''
 
-    def __init__(self, path_train, path_test, path_log, path, label_dict, compute_mean, k, batch_size):
+    def __init__(self, path_train, path_test, path_log, path, label_dict, compute_mean, k, batch_size, prefix):
         # path to log
         self.path_log = path_log.strip()
         # path to meta list
@@ -30,6 +30,7 @@ class MetaBuilder(object):
         # number of folds for cross validation
         self.k = k
         self.batch_size = batch_size
+        self.pos_pfx = prefix
         self.meta = []
         # label definition
         self.label = label_dict
@@ -51,24 +52,31 @@ class MetaBuilder(object):
             num_neg = 0
             print 'generate meta list from %s' % self.path
             for (dirpath, dirnames, filenames) in os.walk(self.path):
-                if len(filenames) > 1 and 'jpg' in filenames[0]:
-                    log.write('There are %d images under %s\n' % (
-                        len(filenames), dirpath.replace(self.path, '').replace('/', '', 1)))
+                fname = ''
+                if len(filenames) < 1:
                     continue
-                if len(filenames) != 1:
+                if len(filenames) > 1:
+                    for fn in filenames:
+                        if self.pos_pfx == fn[:len(self.pos_pfx)]:
+                            fname = fn
+                    if fname == '':
+                        log.write('There are %d images under %s\n' % (
+                            len(filenames), dirpath.replace(self.path, '').replace('/', '', 1)))
+                if len(filenames) == 1 and 'jpg' in filenames[0]:
+                    fname = filenames[0]
+                if fname == '':
                     continue
-                if 'jpg' not in filenames[0]:
-                    continue
-                path = str(os.path.join(dirpath, filenames[0])).replace(
+
+                path = str(os.path.join(dirpath, fname)).replace(
                     self.path, '').replace('/', '', 1)
                 label = self.get_label(path)
                 if label == -1:
                     continue
-                if filenames[0] not in self.fnames:
-                    self.fnames[filenames[0]] = label
+                if fname not in self.fnames:
+                    self.fnames[fname] = label
                 else:
-                    if self.fnames[filenames[0]] != label:
-                        self.conflict.append(filenames[0])
+                    if self.fnames[fname] != label:
+                        self.conflict.append(fname)
                         log.write('Conflict sample: %s, %d\n' % (path, label))
                     else:
                         log.write('Duplicate sample: %s, %d\n' % (path, label))
@@ -151,19 +159,18 @@ class MetaBuilder(object):
 
     def save_(self, log):
         '''save train and test list'''
-        with open(self.path_train, 'w') as train, open(self.path_test, 'w') as test:
-            wtrain = csv.writer(train, delimiter=' ')
-            wtest = csv.writer(test, delimiter=' ')
-            # currently, we use 3 times augmentation for neg samples
-            meta_over = []
-            for i, item in enumerate(self.meta):
-                if item[-1] == 1:
-                    meta_over.extend([item, item, item])
-            meta = self.meta + meta_over
-            random.shuffle(meta)
-            self.save_k_fold(meta)
-            if self.compute_mean is True:
-                self.mean_(log, meta)
+        # currently, we use 4 times augmentation for neg samples
+        #meta_over = []
+        #for i, item in enumerate(self.meta):
+        #    if item[-1] == 1:
+        #        meta_over.extend([item, item, item])
+        #meta = self.meta + meta_over
+        # For the new data set(20170717), we dont need to do augmentation
+        meta = self.meta
+        random.shuffle(meta)
+        self.save_k_fold(meta)
+        if self.compute_mean is True:
+            self.mean_(log, meta)
 
     def mean_(self, log, meta):
         img_list = []
@@ -174,7 +181,7 @@ class MetaBuilder(object):
             img = img.resize((224, 224), PIL.Image.ANTIALIAS)
             img_list.append(np.asarray(img))
         img_array = np.asarray(img_list)
-        print img_array.shape
+        #print img_array.shape
         mean_pixel = np.mean(img_array, axis=(0, 1, 2))
         print 'mean of pixel grayscale: ', mean_pixel
         log.write('mean of pixel grayscale: (%.4f, %.4f, %.4f)\n' %
@@ -189,11 +196,20 @@ def gen_meta(args):
     path_train = 'train'
     path_test = 'test'
     path_log = 'log.csv'
-    label_dict = {'abnormal_nodule': 1, 'normal': 0,
-                  'abnormal_nodule_0228': 1, 'normal_0228': 0}
-    path = '../data/xray'
+    # old folders
+    #label_dict = {'abnormal_nodule': 1, 'normal': 0,
+    #              'abnormal_nodule_0228': 1, 'normal_0228': 0}
+
+    # new folders (20170717)
+    #label_dict = {'nodule1200': 1, 'nodule_ningyida': 1,
+    #        'normal2000': 0, 'normal3000': 0}
+
+    # new folders (20170725)
+    label_dict = {'nodule1200': 1, 'normal2000': 0, 'normal3000': 0}
+
+    path = args.img
     meta_gen = MetaBuilder(os.path.join(result_dir, path_train), os.path.join(result_dir, path_test), os.path.join(
-        result_dir, path_log), path, label_dict, args.mean, args.k, args.bs)
+        result_dir, path_log), path, label_dict, args.mean, args.k, args.bs, args.prefix)
     meta_gen.gen()
 
 
@@ -210,5 +226,6 @@ if __name__ == '__main__':
                         help='number of folds for cross validation')
     parser.add_argument('-bs', default=80, type=int,
                         help='batch size of data feed to singa')
+    parser.add_argument('-prefix', default='PA', help='prefix of file names for folder of multiple images')
     ARGS = parser.parse_args()
     gen_meta(ARGS)

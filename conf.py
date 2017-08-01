@@ -10,7 +10,7 @@ class Conf():
         self.size = 256
         # currently, crop_size is the input shape
         self.crop_size = 224
-        self.input_folder='./data/xray'
+        self.input_folder='./data/xray20170717'
         self.log_dir = 'log'
         self.train_file='./preprocess/metalist/'
         self.test_file='./preprocess/metalist/'
@@ -26,9 +26,14 @@ class Conf():
         self.net = 'resnet'
         # whether to tune the hyperparameters or to run cross validation
         # choices = ['tune', 'cv']
-        self.mode = 'cv'
+        self.mode = 'tune'
         # number of folds for cross validation
         self.k_fold = 10
+        # the whole data set
+        # self.mean = [125.59778829, 125.59778829, 125.59778829]
+        # without nodule_ningyida/
+        self.mean = [122.49739617, 122.49739617, 122.49739617]
+
 
 
     def dump(self, f):
